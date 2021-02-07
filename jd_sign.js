@@ -74,30 +74,34 @@ function sendNotificationIfNeed() {
   let text = "京东签到_" + dateFormat();
   let desp = fs.readFileSync(result_path, "utf8")
 
-  // 去除末尾的换行
-  let SCKEY = push_key.replace(/[\r\n]/g,"")
+  let matchs = desp.match(/Cookie失效‼️/g);
+  if (matchs && matchs.length > 30) {
+    // 去除末尾的换行
+    let SCKEY = push_key.replace(/[\r\n]/g,"")
 
-  const options ={
-    uri:  `https://sc.ftqq.com/${SCKEY}.send`,
-    form: { text, desp },
-    json: true,
-    method: 'POST'
+    const options ={
+      uri:  `https://sc.ftqq.com/${SCKEY}.send`,
+      form: { text, desp },
+      json: true,
+      method: 'POST'
+    }
+
+    rp.post(options).then(res=>{
+      const code = res['errno'];
+      if (code == 0) {
+        console.log("通知发送成功，任务结束！")
+      }
+      else {
+        console.log(res);
+        console.log("通知发送失败，任务中断！")
+        fs.writeFileSync(error_path, JSON.stringify(res), 'utf8')
+      }
+    }).catch((err)=>{
+      console.log("通知发送失败，任务中断！")
+      fs.writeFileSync(error_path, err, 'utf8')
+    })
   }
 
-  rp.post(options).then(res=>{
-    const code = res['errno'];
-    if (code == 0) {
-      console.log("通知发送成功，任务结束！")
-    }
-    else {
-      console.log(res);
-      console.log("通知发送失败，任务中断！")
-      fs.writeFileSync(error_path, JSON.stringify(res), 'utf8')
-    }
-  }).catch((err)=>{
-    console.log("通知发送失败，任务中断！")
-    fs.writeFileSync(error_path, err, 'utf8')
-  })
 }
 
 function main() {
